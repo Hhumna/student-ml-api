@@ -129,3 +129,4 @@ To validate Docker's layer caching behavior, three builds were compared: a basel
 ## Branch Protection
 
 The `main` branch is strictly protected to ensure stability. Direct pushes are disabled. All changes must go through a Pull Request and require passing status checks from the CI workflow before they can be merged.
+# test: verifying branch protection blocks direct push
