@@ -89,8 +89,10 @@ Example performed in this project: after publishing v1.1.0, we simulated a rollb
 
 | Version | PR | Merge Commit | Git Tag | Docker Image | Image Digest |
 |---------|-----|--------------|---------|---------------|---------------|
-| 1.0.0 | #1 | `b3dfd4e0e3ac4a01edc9e9530c6a2d3203ebf9d4` | `v1.0.0` | `ghcr.io/hhumna/student-ml-api:1.0.0` | `sha256:b8f739c620e4270cb29bf5d35d4ab012251c9330a875b7b99649d0936c680627` |
+| 1.0.0 | #1 | `e2bcd91` (see note below) | `v1.0.0` | `ghcr.io/hhumna/student-ml-api:1.0.0` | `sha256:b8f739c620e4270cb29bf5d35d4ab012251c9330a875b7b99649d0936c680627` |
 | 1.1.0 | #2 | `b73b3b6c38231fdb855d82648022f43cfa9f1f7f` | `v1.1.0` | `ghcr.io/hhumna/student-ml-api:1.1.0` | `sha256:<sha256:c42f212ab8eb48bd0f2880e5dfff5ba8b0e717f6ade983dc3fd444d90f7ab72c>` |
+
+> **Note on v1.0.0 traceability:** The `v1.0.0` tag was originally created on PR #1's merge commit (`b3dfd4e`). Shortly after, `release.yml` was added via a direct commit to `main` (`e2bcd91`) rather than through a Pull Request — a process deviation from the intended workflow. Because the tag was deleted and recreated to trigger the new release workflow, `v1.0.0` now points to `e2bcd91` instead of the original PR merge commit. This is documented here for transparency. All subsequent releases (`v1.1.0`, `v1.2.0`) followed the correct feature-branch → PR → CI → merge → tag flow with no direct pushes to main.
 
 ## Docker Build Cache Analysis
 
