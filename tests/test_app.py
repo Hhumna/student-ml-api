@@ -17,7 +17,7 @@ def test_health_endpoint(client):
     response = client.get('/health')
     assert response.status_code == 200
     data = response.get_json()
-    assert data['status'] == 'healthy'
+    assert data['status'] == 'wrong'
     assert data['application'] == 'student-ml-api'
     assert data['version'] == '1.0.0'
 
