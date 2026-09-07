@@ -19,7 +19,7 @@ def test_health_endpoint(client):
     data = response.get_json()
     assert data['status'] == 'healthy'
     assert data['application'] == 'student-ml-api'
-    assert data['application_version'] == '1.1.0'
+    assert data['application_version'] == '1.2.0'
     assert data['model_version'] == 'model-1'
 
 def test_predict_endpoint_success(client):
