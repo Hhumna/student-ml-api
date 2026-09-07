@@ -18,7 +18,8 @@ def health():
     return jsonify({
         "status": "healthy",
         "application": "student-ml-api",
-        "version": VERSION
+        "application_version": VERSION,
+        "model_version": "model-1"
     })
 
 @app.route('/predict', methods=['POST'])
