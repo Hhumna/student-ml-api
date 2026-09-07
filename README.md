@@ -92,6 +92,20 @@ Example performed in this project: after publishing v1.1.0, we simulated a rollb
 | 1.0.0 | #1 | `b3dfd4e0e3ac4a01edc9e9530c6a2d3203ebf9d4` | `v1.0.0` | `ghcr.io/hhumna/student-ml-api:1.0.0` | `sha256:b8f739c620e4270cb29bf5d35d4ab012251c9330a875b7b99649d0936c680627` |
 | 1.1.0 | #2 | `b73b3b6c38231fdb855d82648022f43cfa9f1f7f` | `v1.1.0` | `ghcr.io/hhumna/student-ml-api:1.1.0` | `sha256:<sha256:c42f212ab8eb48bd0f2880e5dfff5ba8b0e717f6ade983dc3fd444d90f7ab72c>` |
 
+## Failure Analysis
+
+### Failure 1: Failed pytest in CI
+**Symptom:** GitHub Actions CI run failed with a red X on the `feature/prediction-api` branch (commit `fa0d380`).
+**Root Cause:** A test assertion was deliberately changed to expect `data["status"] == "wrong"` instead of the correct value `"healthy"`, to validate that CI correctly catches test failures before merge.
+**Evidence:** CI run "test-and-build" failed after 9s with `AssertionError: assert 'healthy' == 'wrong'`. See GitHub Actions run history.
+**Correction:** Reverted the assertion to `data["status"] == "healthy"` in commit `8281357` ("fix: correct health endpoint test assertion"). The next CI run passed with 6/6 tests green.
+
+### Failure 2: Wrong container port mapping
+**Symptom:** `curl http://localhost:5000/health` returns `curl: (7) Failed to connect to localhost port 5000 after 0 ms: Connection refused`.
+**Root Cause:** The container was started with `docker run -p 6000:5000 ...`, mapping host port 6000 to the container's internal port 5000. The app is correctly running and listening inside the container — the port mismatch is purely on the host-side mapping, not an application bug.
+**Evidence:** `curl -v http://localhost:5000/health` fails with "Connection refused", while `curl -v http://localhost:6000/health` succeeds with a 200 OK and the correct `/health` JSON response, proving the container itself is healthy.
+**Correction:** Corrected the `docker run` command to map the intended host port to container port 5000, e.g. `docker run -p 5000:5000 ...`, matching the port the Flask app actually binds to (as declared in `EXPOSE 5000` in the Dockerfile).
+
 ## Branch Protection
 
 The `main` branch is strictly protected to ensure stability. Direct pushes are disabled. All changes must go through a Pull Request and require passing status checks from the CI workflow before they can be merged.
