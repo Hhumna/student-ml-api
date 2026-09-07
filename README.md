@@ -92,6 +92,24 @@ Example performed in this project: after publishing v1.1.0, we simulated a rollb
 | 1.0.0 | #1 | `b3dfd4e0e3ac4a01edc9e9530c6a2d3203ebf9d4` | `v1.0.0` | `ghcr.io/hhumna/student-ml-api:1.0.0` | `sha256:b8f739c620e4270cb29bf5d35d4ab012251c9330a875b7b99649d0936c680627` |
 | 1.1.0 | #2 | `b73b3b6c38231fdb855d82648022f43cfa9f1f7f` | `v1.1.0` | `ghcr.io/hhumna/student-ml-api:1.1.0` | `sha256:<sha256:c42f212ab8eb48bd0f2880e5dfff5ba8b0e717f6ade983dc3fd444d90f7ab72c>` |
 
+## Docker Build Cache Analysis
+
+To validate Docker's layer caching behavior, three builds were compared: a baseline build, a build after modifying only `app.py`, and a build after modifying only `requirements.txt`.
+
+| Step | Baseline | app.py changed | requirements.txt changed |
+|------|----------|-----------------|----------------------------|
+| FROM python:3.11-slim | Ran | Cached | Cached |
+| ARG / LABEL instructions | Ran | Cached | Cached |
+| WORKDIR /app | Ran | Cached | Cached |
+| COPY requirements.txt . | Ran | Cached | **Re-ran** (file changed) |
+| RUN pip install -r requirements.txt | Ran | Cached | **Re-ran** (invalidated by prior step) |
+| COPY . . | Ran | **Re-ran** (source changed) | Re-ran |
+| EXPOSE / CMD | Ran | Re-ran | Re-ran |
+
+**Key finding:** Changing only `app.py` left every layer up to and including `pip install` cached — the expensive dependency install step was skipped entirely, and only the final copy/expose/cmd layers re-ran. Changing `requirements.txt` invalidated the cache starting from the `COPY requirements.txt .` step, forcing a full dependency reinstall.
+
+**Why `COPY requirements.txt . → RUN pip install → COPY . .` beats `COPY . . → RUN pip install`:** Docker caches each instruction as a layer and invalidates a layer (and everything after it) only when its own input changes. If the whole source tree is copied in a single `COPY . .` before installing dependencies, then *any* code change — even editing a single line in `app.py` — invalidates the cache at that copy step, which then forces `pip install` to re-run on every single build, even though the actual dependency list never changed. By copying only `requirements.txt` first and installing dependencies before copying the rest of the source code, dependency installation is only re-triggered when dependencies themselves actually change — dramatically speeding up iterative development and CI build times, since source code changes far more often than dependencies do.
+
 ## Failure Analysis
 
 ### Failure 1: Failed pytest in CI
