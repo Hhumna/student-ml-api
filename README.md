@@ -75,17 +75,22 @@ The pipeline is split into two independent workflows:
 * **ci.yml**: Triggered on Pull Requests to `main`. It runs tests and validates that the Docker image can be built successfully, but it does NOT publish anything.
 * **release.yml**: Triggered only when a new version tag (e.g., `v1.0.0`) is pushed. It runs tests and formally builds and publishes the release artifact to GHCR.
 
-[PASTE THE "why not publish from every PR" paragraph I'll give you]
+Publishing an image on every Pull Request would mean every proposed, unreviewed, and possibly broken change ends up in the registry — wasting storage and bandwidth, and risking that someone accidentally pulls an unvetted image as if it were production-ready. Separating CI (validate on PR) from release (publish on tag) ensures only code that has passed review and been intentionally merged and versioned ever reaches the registry, keeping it a trustworthy history of shippable artifacts rather than a dumping ground of in-progress work.
 
 ## Rollback
 
 Rollbacks in this architecture do not require reverting source code or rebuilding artifacts. We simply deploy the previously known-good container image directly from the registry.
 
-[PASTE THE rollback paragraph]
+Rolling back via the registry means running a pre-built, already-tested artifact — the exact same binary validated by CI and deployed originally, with all dependencies baked in. It takes seconds and carries zero risk of environment drift (different OS, missing system libraries, a different Python patch version). In contrast, a source-based rollback (`git clone` → `pip install` → `python app.py`) rebuilds everything from scratch on the target machine, depending on network access, the right interpreter version, and no dependency-resolution surprises — any of which can turn a quick rollback into a debugging session during a live incident.
+
+Example performed in this project: after publishing v1.1.0, we simulated a rollback by running `docker run ghcr.io/hhumna/student-ml-api:1.0.0` directly — no code changes, no rebuild — and confirmed via `/health` that the old response schema was restored.
 
 ## Traceability
 
-[PASTE the traceability block]
+| Version | PR | Merge Commit | Git Tag | Docker Image | Image Digest |
+|---------|-----|--------------|---------|---------------|---------------|
+| 1.0.0 | #1 | `b3dfd4e0e3ac4a01edc9e9530c6a2d3203ebf9d4` | `v1.0.0` | `ghcr.io/hhumna/student-ml-api:1.0.0` | `sha256:b8f739c620e4270cb29bf5d35d4ab012251c9330a875b7b99649d0936c680627` |
+| 1.1.0 | #2 | `b73b3b6c38231fdb855d82648022f43cfa9f1f7f` | `v1.1.0` | `ghcr.io/hhumna/student-ml-api:1.1.0` | `sha256:<sha256:c42f212ab8eb48bd0f2880e5dfff5ba8b0e717f6ade983dc3fd444d90f7ab72c>` |
 
 ## Branch Protection
 
