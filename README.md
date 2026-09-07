@@ -94,6 +94,8 @@ Example performed in this project: after publishing v1.1.0, we simulated a rollb
 
 > **Note on v1.0.0 traceability:** The `v1.0.0` tag was originally created on PR #1's merge commit (`b3dfd4e`). Shortly after, `release.yml` was added via a direct commit to `main` (`e2bcd91`) rather than through a Pull Request — a process deviation from the intended workflow. Because the tag was deleted and recreated to trigger the new release workflow, `v1.0.0` now points to `e2bcd91` instead of the original PR merge commit. This is documented here for transparency. All subsequent releases (`v1.1.0`, `v1.2.0`) followed the correct feature-branch → PR → CI → merge → tag flow with no direct pushes to main.
 
+> **Update — branch protection root cause found and fixed:** After adding the above note, we tested whether branch protection would prevent a repeat of this deviation by attempting a direct push to `main`. The push initially SUCCEEDED, revealing that the ruleset's target branch was misconfigured — it was pointed at `feature/prediction-api` due to that branch being incorrectly set as the repository's default branch, rather than `main`. After correcting the default branch to `main` and updating the ruleset's target accordingly, a repeat test push was correctly REJECTED by GitHub with `GH013: Repository rule violations found` for both "must be made through a pull request" and "required status check test-and-build is expected." Branch protection is now confirmed to be fully operational on `main`.
+
 ## Docker Build Cache Analysis
 
 To validate Docker's layer caching behavior, three builds were compared: a baseline build, a build after modifying only `app.py`, and a build after modifying only `requirements.txt`.
